@@ -3,8 +3,8 @@ class phpABike {
 	var $client;
 	var $result = "";
 	var $commonParams = array();
-	var $geoPos = array();
-	var $cusotmerData = array();
+	var $geoPos = array("Latitude" => 0.0, "Longitude" => 0.0);
+	var $cusotmerData = array("Phone" => "", "Password" => "");
 	
 	function __construct($url) {
 		$this->client = new SoapClient("https://xml.dbcarsharing-buchung.de/hal2_cabserver/definitions/HAL2_CABSERVER_3.wsdl");
@@ -18,11 +18,18 @@ class phpABike {
 		return $this->customerData;
 	}
 	
-	function buildGeoPos($lat, $lng) {
-		$this->geoPos["Latitude"]	= $lat;
-		$this->geoPos["Longitude"]	= $lng;
+	function buildGeoPos($lat = 0.0, $lng = 0.0) {
+		if($lat != 0.0) {
+			$this->geoPos["Latitude"]	= $lat;
+		}
 		
-		return $this->geoPos;
+		if($lng != 0.0) {
+			$this->geoPos["Longitude"]	= $lng;
+		}
+		
+		if($this->geoPos["Latitude"] != 0.0 && $this->geoPos["Longitude"] != 0.0) {
+			return $this->geoPos;
+		}
 	}
 	
 	function buildCommonParams() {
@@ -48,7 +55,15 @@ class phpABike {
 	
 	function buildDamageData() {}
 	
-	function listFreeBikes() {}
+	function listFreeBikes($maxRes = 100, $radius = 5000, $lat = 0.0, $lng = 0.0) {
+		$this->result = $this->client->__soapCall("CABSERVER.listFreeBikes",
+						array("CommonParams" => $this->buildCommonParams(),
+							  "SearchPosition" => $this->buildGeoPos($lat, $lng),
+							  "maxResults" => $maxRes,
+							  "searchRadius" => $radius));
+		
+		return $this->result;
+	}
 	
 	function getCustomerInfo() {}
 	
