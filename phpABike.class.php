@@ -1,10 +1,11 @@
 <?php
 class phpABike {
 	var $client;
-	var $result = "";
-	var $commonParams = array("UserData" => array("User" => "t_cab_android", "Password" => "3b3cc28469"), "languageUID" => 1, "RequestTime" => 0, "Version" => 1);
-	var $geoPos = array("Latitude" => 0.0, "Longitude" => 0.0);
-	var $cusotmerData = array("Phone" => "", "Password" => "");
+	var $result   = "";
+	var $commonParams  = array("UserData" => array("User" => "t_cab_android", "Password" => "3b3cc28469"), "languageUID" => 1, "RequestTime" => 0, "Version" => 1);
+	var $geoPos   = array("Latitude" => 0.0, "Longitude" => 0.0);
+	var $cusotmerData  = array("Phone" => "", "Password" => "");
+	var $tripLimits = array("FirstEntry" => 0, "EntryCount" => 20, "StartTime" => "", "EndTime" => "");
 
 	function __construct($url) {
 		$this->client = new SoapClient("https://xml.dbcarsharing-buchung.de/hal2_cabserver/definitions/HAL2_CABSERVER_3.wsdl");
@@ -51,7 +52,23 @@ class phpABike {
 
 	function buildBounusCard() {}
 
-	function buildTripLimits() {}
+	function buildTripLimits($firstEntry, $entryCount, $startTime, $endTime) {
+		$this->tripLimits["FirstEntry"] = $firstEntry;
+		$this->tripLimits["EntryCount"] = $entryCount;
+		if(is_int($startTime)) {
+			$this->tripLimits["StartTime"] = date("Y-d-m\TG:i:s", $startTime);
+		}
+		else {
+			$this->tripLimits["StartTime"] = $startTime;
+		}
+
+		if(is_int($endTime)) {
+			$this->tripLimits["EndTime"] = date("Y-d-m\TG:i:s", $endTime);
+		}
+		else {
+			$this->tripLimits["EndTime"] = $endTime;
+		}
+	}
 
 	function buildDamageData() {}
 
@@ -90,7 +107,14 @@ class phpABike {
 
 	function listProductInfo() {}
 
-	function checkTripStart() {}
+	function checkTripStart($bike, $user = "", $passwd = "") {
+		$this->result = $this->client->__soapCall("CABSERVER.listFreeBikes",
+			array("CommonParams" => $this->buildCommonParams(),
+				"CustomerData" => $this->buildCustomerData($user, $passwd),
+				"Bike" => $bike));
+
+		return $this->result;
+	}
 
 	function changePersCode() {}
 
@@ -108,6 +132,13 @@ class phpABike {
 
 	function reportDamage() {}
 
-	function listCompletedTrips() {}
+	function listCompletedTrips($firstEntry = 0, $entryCount = 20, $startTime = "", $endTime = "", $user = "", $passwd = "") {
+		$this->result = $this->client->__soapCall("CABSERVER.listFreeBikes",
+			array("CommonParams" => $this->buildCommonParams(),
+				"CustomerData" => $this->buildCustomerData($user, $passwd),
+				"TripLimits" => $this->buildTripLimits($firstEntry, $entryCount, $startTime, $endTime)));
+
+		return $this->result;
+	}
 }
 ?>
